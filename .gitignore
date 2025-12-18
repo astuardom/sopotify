@@ -10,7 +10,6 @@ ENV/
 build/
 develop-eggs/
 dist/
-downloads/
 eggs/
 .eggs/
 lib/
@@ -50,9 +49,7 @@ app.log
 .cache
 *.cache
 
-# Downloads folder (music files)
-downloads/
-downloads/*
+
 
 # Backups
 *.backup
