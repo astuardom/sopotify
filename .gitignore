@@ -86,3 +86,7 @@ coverage.xml
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Temporary fix scripts
+fix_html_pwa.py
+quick_fix.py
