@@ -45,8 +45,6 @@ desktop.ini
 app.log
 
 # Environment variables
-.env
-.env.local
 
 # Cache
 .cache
