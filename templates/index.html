@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarama Music</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Your personal music streaming and download platform">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Jarama Music">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- Icons for iOS -->
+    <link rel="apple-touch-icon" sizes="72x72" href="{{ url_for('static', filename='icons/icon-72x72.png') }}">
+    <link rel="apple-touch-icon" sizes="96x96" href="{{ url_for('static', filename='icons/icon-96x96.png') }}">
+    <link rel="apple-touch-icon" sizes="128x128" href="{{ url_for('static', filename='icons/icon-128x128.png') }}">
+    <link rel="apple-touch-icon" sizes="144x144" href="{{ url_for('static', filename='icons/icon-144x144.png') }}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='icons/icon-152x152.png') }}">
+    <link rel="apple-touch-icon" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/icon-72x72.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/icon-72x72.png') }}">
+    
+    <!-- Fonts and Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="mobile-overlay" id="mobile-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="app-container">
+    <!-- Left Sidebar: Library -->
+    <nav class="sidebar" id="sidebar">
+        <div class="nav-header">
+            <div class="logo">
+                <i class="fas fa-music"></i> Jarama Music
+            </div>
+        </div>
+
+        <div class="library-section">
+            <div class="library-header">
+                <button class="lib-btn active"><i class="fas fa-book"></i> Your Library</button>
+                <button class="action-btn"><i class="fas fa-plus"></i></button>
+            </div>
+            <div class="library-filters">
+                <span class="chip active">Playlists</span>
+                <span class="chip">Artists</span>
+            </div>
+            <ul class="library-list" id="library-list">
+                <!-- Populated by JS -->
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="top-bar">
+            <button class="menu-btn" id="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="nav-arrows">
+                <button class="arrow-btn"><i class="fas fa-chevron-left"></i></button>
+                <button class="arrow-btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="search-bar-container">
+                <div class="input-group">
+                    <i class="fas fa-link"></i>
+                    <input type="text" id="spotify-url" placeholder="Paste Spotify link to download...">
+                    <button id="download-btn" onclick="startDownload()">Download</button>
+                </div>
+            </div>
+            <div class="user-profile">
+                <button class="user-btn">JM</button>
+            </div>
+        </header>
+
+        <!-- Fixed Header Area -->
+        <div class="playlist-header" id="playlist-header">
+            <div class="playlist-cover">
+                <i class="fas fa-heart"></i>
+            </div>
+            <div class="playlist-info">
+                <span class="type">Playlist</span>
+                <h1 id="header-title">Downloaded Music</h1>
+                <p class="description" id="header-desc">Your local collection.</p>
+                <div class="meta">
+                    <span class="owner">Jarama Music</span> • <span id="header-count">0 songs</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <button class="play-circle-btn" onclick="playAll()"><i class="fas fa-play"></i></button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="content-scroll">
+            <!-- Track List -->
+            <div class="track-list-container">
+                <table class="track-table">
+                    <thead>
+                        <tr>
+                            <th class="col-index">#</th>
+                            <th class="col-title">Title</th>
+                            <th class="col-album">Album</th>
+                            <th class="col-date">Date Added</th>
+                            <th class="col-duration"><i class="far fa-clock"></i></th>
+                        </tr>
+                    </thead>
+                    <tbody id="track-list-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Status/Loader -->
+            <div id="status-area" class="hidden">
+                <div class="loader"></div>
+                <span id="status-text"></span>
+            </div>
+        </div>
+
+        <!-- Now Playing Bar -->
+        <div class="player-bar">
+            <div class="player-left">
+                <div class="now-playing-cover">
+                    <i class="fas fa-music"></i>
+                    <img id="np-cover" src="" style="display:none;">
+                </div>
+                <div class="now-playing-info">
+                    <span id="np-title" class="np-title">No Track Selected</span>
+                    <span id="np-artist" class="np-artist">--</span>
+                </div>
+                <button class="like-btn"><i class="far fa-heart"></i></button>
+            </div>
+
+            <div class="player-center">
+                <div class="player-controls">
+                    <button class="control-btn" title="Shuffle"><i class="fas fa-random"></i></button>
+                    <button class="control-btn" title="Previous"><i class="fas fa-step-backward"></i></button>
+                    <button class="control-btn main-play" id="main-play-btn" onclick="togglePlay()">
+                        <i class="fas fa-play-circle"></i>
+                    </button>
+                    <button class="control-btn" onclick="playNextTrack()" title="Next"><i
+                            class="fas fa-step-forward"></i></button>
+                    <button class="control-btn" title="Repeat"><i class="fas fa-redo"></i></button>
+                </div>
+                <div class="progress-container">
+                    <span class="time current">0:00</span>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill"></div>
+                    </div>
+                    <span class="time total">0:00</span>
+                </div>
+            </div>
+
+            <div class="player-right">
+                <button class="control-btn"><i class="fas fa-list"></i></button>
+                <button class="control-btn"><i class="fas fa-desktop"></i></button>
+                <div class="volume-bar">
+                    <i class="fas fa-volume-up"></i>
+                    <div class="vol-bg">
+                        <div class="vol-fill"></div>
+                    </div>
+                </div>
+                <canvas id="waveform-canvas" style="display:none;"></canvas>
+            </div>
+        </div>
+
+        <audio id="audio-player" class="hidden" crossorigin="anonymous"></audio>
+    </main>
+</div>
+
+
+
+    <script>
+    let currentTrackList = [];
+    let currentTrackIndex = -1;
+    let currentFilter = 'playlists';
+    let currentFolder = 'All';
+    let libraryData = {};
+    let audioContext, analyser, dataArray;
+    let isVisualizerInit = false;
+
+    async function loadLibrary() {
+        try {
+            const response = await fetch('/stats');
+            const data = await response.json();
+            libraryData = data.library;
+            renderSidebar(libraryData, currentFilter);
+            if (currentFolder === 'All' && currentFilter === 'playlists') {
+                renderTrackList('All');
+            }
+        } catch (e) {
+            console.error("Error loading library:", e);
+        }
+    }
+
+    document.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            const type = chip.innerText.toLowerCase();
+            currentFilter = type;
+            renderSidebar(libraryData, type);
+        });
+    });
+
+    function renderSidebar(library, filterType) {
+        const list = document.getElementById('library-list');
+        list.innerHTML = '';
+        if (filterType === 'playlists') {
+            const allLi = document.createElement('li');
+            allLi.className = `library-item ${currentFolder === 'All' ? 'active' : ''}`;
+            allLi.innerHTML = `<div class="lib-img"><i class="fas fa-heart"></i></div>
+                    <div class="lib-text"><span class="lib-title">Liked Songs</span><span class="lib-desc">Playlist •
+                            ${Object.values(library).flat().length} songs</span></div>`;
+            allLi.onclick = () => switchFolder('All', allLi);
+            list.appendChild(allLi);
+            for (const [folder, tracks] of Object.entries(library)) {
+                if (folder === 'Uncategorized') continue;
+                const li = document.createElement('li');
+                li.className = `library-item ${currentFolder === folder ? 'active' : ''}`;
+                li.innerHTML = `<div class="lib-img"><i class="fas fa-music"></i></div>
+                    <div class="lib-text"><span class="lib-title">${folder}</span><span class="lib-desc">Folder •
+                            ${tracks.length} songs</span></div>`;
+                li.onclick = () => {
+                    switchFolder(folder, li);
+                    if (window.innerWidth <= 768) toggleSidebar();
+                };
+                list.appendChild(li);
+            }
+        } else if (filterType === 'artists') {
+            const artists = {};
+            Object.values(library).flat().forEach(track => {
+                if (!artists[track.artist]) artists[track.artist] = [];
+                artists[track.artist].push(track);
+            });
+            for (const [artist, tracks] of Object.entries(artists)) {
+                li.className = 'library-item';
+                li.innerHTML = `<div class="lib-img"><i class="fas fa-user"></i></div>
+                        <div class="lib-text"><span class="lib-title">${artist}</span><span class="lib-desc">Artist •
+                                ${tracks.length} songs</span></div>`;
+                li.onclick = () => {
+                    showArtistTracks(artist, tracks, li);
+                    if (window.innerWidth <= 768) toggleSidebar();
+                };
+                list.appendChild(li);
+            }
+        }
+    }
+
+    function showArtistTracks(artist, tracks, element) {
+        document.querySelectorAll('.library-item').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+        document.getElementById('header-title').innerText = artist;
+        document.getElementById('header-desc').innerText = 'Artist';
+        renderTrackList(null, tracks);
+    }
+
+    function switchFolder(folder, element) {
+        currentFolder = folder;
+        document.querySelectorAll('.library-item').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+        document.getElementById('header-title').innerText = folder === 'All' ? 'Liked Songs' : folder;
+        document.getElementById('header-desc').innerText = folder === 'All' ? 'All downloaded tracks.' : 'Local folder.';
+        renderTrackList(folder);
+    }
+
+    function renderTrackList(folder, explicitTracks = null) {
+        const tbody = document.getElementById('track-list-body');
+        tbody.innerHTML = '';
+        let tracks = explicitTracks || (folder === 'All' ? Object.values(libraryData).flat() : libraryData[folder] || []);
+        currentTrackList = tracks;
+        document.getElementById('header-count').innerText = `${tracks.length} songs`;
+        const fragment = document.createDocumentFragment();
+        tracks.forEach((track, index) => {
+            const tr = document.createElement('tr');
+            tr.onclick = () => playTrack(track);
+            tr.innerHTML = `<td class="col-index">${index + 1}</td>
+                            <td class="col-title">
+                                <div class="track-flex">
+                                    <div class="track-img"><img src="/cover/${encodeURIComponent(track.path)}"
+                                            loading="lazy"
+                                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><i
+                                            class="fas fa-music" style="display:none"></i></div>
+                                    <div class="track-details"><span class="t-name">${track.title}</span></div>
+                                </div>
+                            </td>
+                            <td class="col-album">${track.album}</td>
+                            <td class="col-date">Just now</td>
+                            <td class="col-duration">${track.duration}</td>`;
+            fragment.appendChild(tr);
+        });
+        tbody.appendChild(fragment);
+    }
+
+    function playTrack(track) {
+        const audio = document.getElementById('audio-player');
+        currentTrackIndex = currentTrackList.findIndex(t => t.path === track.path);
+        if (!isVisualizerInit) initVisualizer();
+        audio.src = `/play/${encodeURIComponent(track.path)}`;
+        audio.play().catch(e => console.error('Playback error:', e));
+        updatePlayerUI(track);
+    }
+
+    function togglePlay() {
+        const icon = document.querySelector('#main-play-btn i');
+        if (audio.paused) {
+            audio.play();
+            icon.className = 'fas fa-pause-circle';
+        } else {
+            audio.pause();
+            icon.className = 'fas fa-play-circle';
+        }
+    }
+
+    function playNextTrack() {
+        if (currentTrackList.length === 0) return;
+        currentTrackIndex = (currentTrackIndex + 1) % currentTrackList.length;
+        playTrack(currentTrackList[currentTrackIndex]);
+    }
+
+    function playAll() {
+        if (currentTrackList && currentTrackList.length > 0) {
+            currentTrackIndex = 0;
+            playTrack(currentTrackList[0]);
+        }
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+    }
+
+    async function startDownload() {
+        const url = document.getElementById('spotify-url').value.trim();
+        const statusArea = document.getElementById('status-area');
+        const statusText = document.getElementById('status-text');
+        if (!url) return;
+        statusArea.classList.remove('hidden');
+        statusText.innerText = "Starting...";
+        try {
+            const response = await fetch('/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    url: url
+                })
+            });
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            while (true) {
+                const {
+                    done,
+                    value
+                } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                    if (line.trim()) {
+                        try {
+                            if (data.message) statusText.innerText = data.message;
+                            if (data.status === 'completed') loadLibrary();
+                        } catch (e) { }
+                    }
+                }
+            }
+            statusText.innerText = "Done!";
+            setTimeout(() => statusArea.classList.add('hidden'), 3000);
+        } catch (e) {
+            statusText.innerText = "Error";
+        }
+    }
+
+    const audioPlayer = document.getElementById('audio-player');
+    const progressBar = document.querySelector('.progress-bar-fill');
+    const currTime = document.querySelector('.time.current');
+    const totalTime = document.querySelector('.time.total');
+
+    audioPlayer.addEventListener('loadedmetadata', () => {
+        totalTime.innerText = formatTime(audioPlayer.duration);
+    });
+
+    audioPlayer.addEventListener('timeupdate', () => {
+        const {
+            currentTime,
+            duration
+        } = audioPlayer;
+        if (isNaN(duration)) return;
+        progressBar.style.width = `${(currentTime / duration) * 100}%`;
+        currTime.innerText = formatTime(currentTime);
+    });
+
+    audioPlayer.addEventListener('ended', () => {
+        playNextTrack();
+    });
+
+    function formatTime(time) {
+        if (time && !isNaN(time)) {
+            const min = Math.floor(time / 60);
+            const sec = Math.floor(time % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+        return '0:00';
+    }
+
+    function initVisualizer() {
+        if (isVisualizerInit) return;
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaElementSource(audio);
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            analyser.fftSize = 128;
+            const bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            isVisualizerInit = true;
+            animateWaveform();
+        } catch (e) {
+            console.error('Visualizer init error:', e);
+        }
+    }
+
+    function animateWaveform() {
+        requestAnimationFrame(animateWaveform);
+        if (!analyser) return;
+        const canvas = document.getElementById('waveform-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = 85;
+        analyser.getByteFrequencyData(dataArray);
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Draw circular waveform 
+        const bars = 48;
+        const angleStep = (Math.PI * 2) / bars;
+        for (let i = 0; i < bars; i++) {
+            const angle = i * angleStep - Math.PI / 2;
+            const dataIndex = Math.floor(i * dataArray.length / bars);
+            const amplitude = dataArray[dataIndex] / 255;
+            const barLength = 15 + amplitude * 25;
+            const x1 = centerX + Math.cos(angle) * radius;
+            const y1 = centerY + Math.sin(angle) * radius;
+            const x2 = centerX + Math.cos(angle) * (radius + barLength);
+            const y2 = centerY + Math.sin(angle) * (radius + barLength); // Gradient color based on amplitude 
+            const hue = 280 + amplitude * 60;
+            ctx.strokeStyle = `hsl(${hue}, 80%, ${50 + amplitude * 30}%)`;
+            ctx.lineWidth = 3.5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        } // Draw glow effect 
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#A855F7'; // Draw outer ring 
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius - 3, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+
+    function updatePlayerUI(track) {
+        const coverImg = document.getElementById('np-cover');
+        const title = document.getElementById('np-title');
+        const artist = document.getElementById('np-artist');
+
+        if (title) title.innerText = track.title;
+        if (artist) artist.innerText = track.artist || 'Unknown Artist';
+
+        if (coverImg && icon) {
+            const coverUrl = `/cover/${encodeURIComponent(track.path)}`;
+            coverImg.src = coverUrl;
+            coverImg.style.display = 'block';
+            icon.style.display = 'none';
+
+            coverImg.onerror = () => {
+                coverImg.style.display = 'none';
+                icon.style.display = 'flex';
+            };
+        }
+
+        // Update window title
+        document.title = `${track.title} • Jarama Music`;
+
+        // Highlight in list
+    }
+
+
+
+
+
+    async function startDownload() {
+        if (!url) return;
+        statusArea.classList.remove('hidden');
+        statusText.innerText = "Starting...";
+        try {
+            const response = await fetch('/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    url: url
+                })
+            });
+            while (true) {
+                const {
+                    done,
+                    value
+                } = await reader.read();
+                if (done) break;
+                for (const line of lines) {
+                    if (line.trim()) {
+                        try {
+                            if (data.message) statusText.innerText = data.message;
+                            if (data.status === 'completed') loadLibrary();
+                        } catch (e) { }
+                    }
+                }
+            }
+            statusText.innerText = "Done!";
+            setTimeout(() => statusArea.classList.add('hidden'), 3000);
+        } catch (e) {
+            statusText.innerText = "Error";
+        }
+    }
+
+
+    audioPlayer.addEventListener('loadedmetadata', () => {
+        totalTime.innerText = formatTime(audioPlayer.duration);
+    });
+
+    audioPlayer.addEventListener('timeupdate', () => {
+        const {
+            currentTime,
+            duration
+        } = audioPlayer;
+        if (isNaN(duration)) return;
+        progressBar.style.width = `${(currentTime / duration) * 100}%`;
+        currTime.innerText = formatTime(currentTime);
+    });
+
+    audioPlayer.addEventListener('ended', () => {
+        playNextTrack();
+    });
+
+
+
+
+
+    loadLibrary();
+
+    // ============================================
+    // PWA - Service Worker Registration
+    // ============================================
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/static/sw.js')
+                .then((registration) => {
+                    console.log('✓ Service Worker registered successfully:', registration.scope);
+
+                    // Check for updates periodically
+                    setInterval(() => {
+                        registration.update();
+                    }, 60000); // Check every minute
+                })
+                .catch((error) => {
+                    console.log('✗ Service Worker registration failed:', error);
+                });
+        });
+
+        // Listen for service worker updates
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('Service Worker updated, reloading page...');
+            window.location.reload();
+        });
+    }
+
+    // PWA Install Prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent the mini-infobar from appearing on mobile
+        e.preventDefault();
+        // Stash the event so it can be triggered later
+        deferredPrompt = e;
+
+        // Optionally, show your own install promotion UI here
+        console.log('PWA install prompt available');
+
+        // You can add a custom install button here
+        // Example: showInstallPromotion();
+    });
+
+    window.addEventListener('appinstalled', () => {
+        console.log('✓ PWA was installed successfully');
+        deferredPrompt = null;
+    });
+
+    // Optional: Function to trigger install prompt
+    function installPWA() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+            });
+        }
+    }
+</script>
+</body>
+
+</html>
+</body>
+
+</html>

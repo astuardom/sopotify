@@ -1,0 +1,5 @@
+flask
+spotipy
+yt-dlp
+python-dotenv
+mutagen
