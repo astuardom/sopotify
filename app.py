@@ -12,11 +12,19 @@ import logging
 
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(filename='app.log', level=logging.DEBUG, 
-                    format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
+# Configure logging for Render (stdout)
+logging.basicConfig(level=logging.INFO, 
+                    format='%(asctime)s %(levelname)s %(name)s : %(message)s')
+
+# Validate credentials early
+if not os.getenv("SPOTIPY_CLIENT_ID") or not os.getenv("SPOTIPY_CLIENT_SECRET"):
+    logging.error("Missing Spotify credentials in environment variables")
+    raise RuntimeError("Faltan credenciales de Spotify en variables de entorno (SPOTIPY_CLIENT_ID/SECRET)")
 
 app = Flask(__name__)
+
+# Ensure downloads directory exists
+os.makedirs("downloads", exist_ok=True)
 
 # Initialize services
 try:

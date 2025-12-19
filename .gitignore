@@ -44,6 +44,7 @@ desktop.ini
 app.log
 
 # Environment variables
+.env
 
 # Cache
 .cache
@@ -85,3 +86,16 @@ dmypy.json
 # Temporary fix scripts
 fix_html_pwa.py
 quick_fix.py
+emergency_fix.py
+final_fix.py
+debug_download.py
+test_*.py
+
+# Downloads directory (music files)
+downloads/
+*.mp3
+
+# Compressed files
+*.zip
+*.tar.gz
+*.rar
