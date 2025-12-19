@@ -233,7 +233,12 @@
 
                         // Populate main track table
                         const tr = document.createElement('tr');
-                        tr.onclick = () => playTrack(track);
+                        tr.onclick = (e) => {
+                            // Don't play if clicking download button
+                            if (!e.target.closest('.download-track-btn')) {
+                                playTrack(track);
+                            }
+                        };
                         tr.innerHTML = `
                             <td class="col-index">${index + 1}</td>
                             <td class="col-title">
@@ -249,7 +254,14 @@
                             </td>
                             <td class="col-album">${track.album || 'Unknown Album'}</td>
                             <td class="col-date">Recently</td>
-                            <td class="col-duration">${track.duration || '0:00'}</td>
+                            <td class="col-duration">
+                                <div style="display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
+                                    <span>${track.duration || '0:00'}</span>
+                                    <button class="download-track-btn" onclick="downloadTrack('${track.path.replace(/'/g, "\\'")}'event)" title="Download to device">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            </td>
                         `;
                         trackListBody.appendChild(tr);
                     });
@@ -257,6 +269,11 @@
             } catch (e) {
                 console.error('Error loading library:', e);
             }
+        }
+
+        function downloadTrack(trackPath, event) {
+            event.stopPropagation();
+            window.location.href = `/download/${encodeURIComponent(trackPath)}`;
         }
 
         function playTrack(track) {

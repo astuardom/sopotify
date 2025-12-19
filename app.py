@@ -49,6 +49,22 @@ def play_file(filename):
     response.headers['Cache-Control'] = 'public, max-age=31536000'
     return response
 
+@app.route('/download/<path:filename>')
+def download_file(filename):
+    """Universal download route - works on Android, iOS, and PC"""
+    file_path = os.path.join('downloads', filename)
+    
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'File not found'}), 404
+    
+    return send_from_directory(
+        'downloads',
+        filename,
+        as_attachment=True,
+        download_name=os.path.basename(filename),
+        mimetype='audio/mpeg'
+    )
+
 @app.route('/cover/<path:filename>')
 def cover_art(filename):
     try:
