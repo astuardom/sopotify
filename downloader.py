@@ -30,7 +30,7 @@ class Downloader:
                 {
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
-                    'preferredquality': '320',
+                    'preferredquality': '192',  # Reduced from 320 for faster downloads
                 },
                 {
                     'key': 'FFmpegMetadata',
@@ -44,10 +44,18 @@ class Downloader:
             'outtmpl': os.path.join(target_path, '%(title)s.%(ext)s'),
             'quiet': True,
             'no_warnings': True,
+            'socket_timeout': 30,  # Add timeout to prevent hanging
+            'retries': 3,  # Limit retries
+            'fragment_retries': 3,
+            'skip_unavailable_fragments': True,
+            'extract_flat': False,
+            'no_playlist': True,  # Ensure we only get single video
+            'ignoreerrors': False,
         }
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                logging.info(f"Starting download for: {query}")
                 info = ydl.extract_info(search_query, download=True)
                 if 'entries' in info:
                     video_info = info['entries'][0]
@@ -56,6 +64,8 @@ class Downloader:
                 
                 filename = ydl.prepare_filename(video_info)
                 final_filename = os.path.splitext(filename)[0] + '.mp3'
+                
+                logging.info(f"Download completed: {final_filename}")
                 
                 return {
                     'status': 'success',
@@ -70,3 +80,4 @@ class Downloader:
                 'message': str(e),
                 'query': query
             }
+
