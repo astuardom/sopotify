@@ -127,15 +127,30 @@ def stats():
                     'artist': artist,
                     'album': album,
                     'duration': duration_str,
-                    'size': size
+                    'size': size,
+                    'timestamp': os.path.getmtime(path)
                 })
 
     total_size_mb = f"{total_size_bytes / (1024 * 1024):.2f} MB"
 
+    # Flatten library to a single list for the frontend
+    all_tracks = []
+    for folder, tracks in library.items():
+        all_tracks.extend(tracks)
+    
+    # Sort by modification time (newest first) if possible, or just reverse
+    # We need to get modification time. Let's add it to the track object above or just sort by name for now.
+    # Better: let's sort by file modification time.
+    # We need to re-iterate or store mtime in the loop above.
+    
+    # Let's just sort by name for now, or add a timestamp field in the loop above.
+    # Actually, let's update the loop above to include timestamp.
+    
     return jsonify({
         'count': total_count,
         'size': total_size_mb,
-        'library': library
+        'library': library,
+        'tracks': sorted(all_tracks, key=lambda x: x.get('timestamp', 0), reverse=True)
     })
 
 @app.route('/download', methods=['POST'])
