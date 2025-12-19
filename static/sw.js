@@ -1,5 +1,5 @@
-const CACHE_NAME = 'jarama-music-v1';
-const RUNTIME_CACHE = 'jarama-runtime-v1';
+const CACHE_NAME = 'jarama-music-v2';
+const RUNTIME_CACHE = 'jarama-runtime-v2';
 
 // Assets to cache on install
 const PRECACHE_ASSETS = [
@@ -45,6 +45,11 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
+    // Skip POST requests (like /download) - let browser handle them directly
+    if (request.method === 'POST') {
+        return;
+    }
+
     // Skip cross-origin requests
     if (url.origin !== location.origin) {
         // For external resources (fonts, icons), use cache first
@@ -65,8 +70,8 @@ self.addEventListener('fetch', (event) => {
     }
 
     // For API calls and dynamic content, use network first
-    if (url.pathname.startsWith('/download') || 
-        url.pathname.startsWith('/stats') || 
+    if (url.pathname.startsWith('/download') ||
+        url.pathname.startsWith('/stats') ||
         url.pathname.startsWith('/play') ||
         url.pathname.startsWith('/cover')) {
         event.respondWith(

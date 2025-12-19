@@ -1,45 +1,37 @@
-import logging
-import os
-from dotenv import load_dotenv
-from spotify_service import SpotifyService
-from downloader import Downloader
-
-# Configure logging to console for this script
-logging.basicConfig(level=logging.DEBUG)
-
-load_dotenv()
+import requests
+import json
 
 def test_download():
-    print("Initializing services...")
-    try:
-        spotify = SpotifyService()
-        downloader = Downloader()
-    except Exception as e:
-        print(f"Failed to init services: {e}")
-        return
-
-    # Test Album URL
-    test_url = "https://open.spotify.com/album/1kCHru7uhxBUdzkm4gzRQc" # Hamilton (Original Broadway Cast Recording) - just checking fetch, not download all
+    url = 'http://localhost:5000/download'
+    # Song: "Never Gonna Give You Up" by Rick Astley (Classic test)
+    spotify_url = 'https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT'
     
-    print(f"Testing album fetch for: {test_url}")
+    print(f"Testing download for: {spotify_url}")
     
     try:
-        album_name = spotify.get_album_name(test_url)
-        print(f"Album Name: {album_name}")
+        response = requests.post(url, json={'url': spotify_url}, stream=True)
         
-        tracks = spotify.get_album_tracks(test_url)
-        if not tracks:
-            print("Failed to get album tracks")
-            return
+        print(f"Response Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            print("Response Stream:")
+            for line in response.iter_lines():
+                if line:
+                    decoded_line = line.decode('utf-8')
+                    print(f"Received: {decoded_line}")
+                    try:
+                        data = json.loads(decoded_line)
+                        if data.get('status') == 'error':
+                            print(f"❌ Error reported by server: {data.get('message')}")
+                        elif data.get('status') == 'completed':
+                            print("✅ Download completed successfully!")
+                    except json.JSONDecodeError:
+                        print("Could not parse JSON")
+        else:
+            print(f"❌ Request failed: {response.text}")
             
-        print(f"Found {len(tracks)} tracks in album.")
-        print(f"First track: {tracks[0]['name']} - {tracks[0]['artist']}")
-        
-        # We won't download all of them in debug to save time/bandwidth
-        # Just verify we got the list
-        
     except Exception as e:
-        print(f"Error during test: {e}")
+        print(f"❌ Connection error: {e}")
 
 if __name__ == "__main__":
     test_download()
