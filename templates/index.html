@@ -56,8 +56,8 @@
                     <button class="action-btn"><i class="fas fa-plus"></i></button>
                 </div>
                 <div class="library-filters">
-                    <span class="chip active">Playlists</span>
-                    <span class="chip">Artists</span>
+                    <span class="chip active" onclick="switchView('playlists')">Playlists</span>
+                    <span class="chip" onclick="switchView('artists')">Artists</span>
                 </div>
                 <ul class="library-list" id="library-list">
                     <!-- Populated by JS -->
@@ -188,6 +188,9 @@
         </main>
     </div>
 
+    <!-- Library Management Script -->
+    <script src="{{ url_for('static', filename='library.js') }}"></script>
+
     <script>
         let audioContext, analyser, dataArray;
         let isVisualizerInit = false;
@@ -196,80 +199,6 @@
         let isShuffleEnabled = false;
         let isRepeatEnabled = false;
         let shuffledIndices = [];
-
-        async function loadLibrary() {
-            try {
-                const response = await fetch('/stats');
-                const data = await response.json();
-                const list = document.getElementById('library-list');
-                const trackListBody = document.getElementById('track-list-body');
-                const headerCount = document.getElementById('header-count');
-
-                list.innerHTML = '';
-                trackListBody.innerHTML = '';
-
-                if (data.tracks && data.tracks.length > 0) {
-                    currentTrackList = data.tracks;
-
-                    // Update header count
-                    headerCount.innerText = `${data.tracks.length} songs`;
-
-                    // Populate sidebar library
-                    data.tracks.forEach((track, index) => {
-                        const li = document.createElement('li');
-                        li.className = 'library-item';
-                        li.onclick = () => playTrack(track);
-                        li.innerHTML = `
-                            <div class="item-cover">
-                                <i class="fas fa-music"></i>
-                            </div>
-                            <div class="item-info">
-                                <div class="item-title">${track.title}</div>
-                                <div class="item-artist">${track.artist || 'Unknown Artist'}</div>
-                            </div>
-                            <div class="item-duration">${track.duration || '0:00'}</div>
-                        `;
-                        list.appendChild(li);
-
-                        // Populate main track table
-                        const tr = document.createElement('tr');
-                        tr.onclick = (e) => {
-                            // Don't play if clicking download button
-                            if (!e.target.closest('.download-track-btn')) {
-                                playTrack(track);
-                            }
-                        };
-                        tr.innerHTML = `
-                            <td class="col-index">${index + 1}</td>
-                            <td class="col-title">
-                                <div class="track-flex">
-                                    <div class="track-img">
-                                        <i class="fas fa-music"></i>
-                                    </div>
-                                    <div class="track-details">
-                                        <div class="t-name">${track.title}</div>
-                                        <div class="t-artist">${track.artist || 'Unknown Artist'}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="col-album">${track.album || 'Unknown Album'}</td>
-                            <td class="col-date">Recently</td>
-                            <td class="col-duration">
-                                <div style="display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
-                                    <span>${track.duration || '0:00'}</span>
-                                    <button class="download-track-btn" onclick="downloadTrack('${track.path.replace(/'/g, "\\'")}'event)" title="Download to device">
-                                        <i class="fas fa-download"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        `;
-                        trackListBody.appendChild(tr);
-                    });
-                }
-            } catch (e) {
-                console.error('Error loading library:', e);
-            }
-        }
 
         function downloadTrack(trackPath, event) {
             event.stopPropagation();
